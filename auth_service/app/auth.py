@@ -8,7 +8,7 @@ from . import crud, schemas
 # Создаем контекст для хэширования паролей
 pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
 
-SECRET_KEY = "mysecretkey"
+SECRET_KEY = "F03E2408FEB325B0732DCD4BB5ADA367"
 ALGORITHM = "HS256"
 ACCESS_TOKEN_EXPIRE_MINUTES = 30
 
