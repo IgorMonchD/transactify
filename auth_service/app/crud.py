@@ -19,7 +19,8 @@ def create_user(db: Session, user: schemas.UserCreate):
     db.refresh(db_user)
     return db_user
 
-def change_password(db: Session, user_id: int, new_password: str):
+def change_password(db: Session, username: int, new_password: str):
     hashed_password = pwd_context.hash(new_password)
-    db.query(models.User).filter(models.User.id == user_id).update({"hashed_password": hashed_password})
+    db.query(models.User).filter(models.User.username == username).update({"hashed_password": hashed_password})
     db.commit()
+

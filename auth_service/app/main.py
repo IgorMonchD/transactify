@@ -27,12 +27,36 @@ def register(user: schemas.UserCreate, db: Session = Depends(get_db)):
 @app.post("/login", response_model=schemas.Token)
 def login(username: str, password: str, db: Session = Depends(get_db)):
     user = auth.authenticate_user(db, username, password)
-    access_token = auth.create_access_token(data={"sub": user.username})
+    if not user:
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Incorrect username or password",
+        )
+    print(user)
+    access_token = auth.create_access_token(data={"id": user.id, "username": user.username})
     return {"access_token": access_token, "token_type": "bearer"}
 
+
 @app.post("/change-password")
-def change_password(new_password: str, db: Session = Depends(get_db)):
-    user = auth.get_current_user(db)
-    crud.change_password(db, user.id, new_password)
+def change_password(
+    new_password: str,
+    token: str = Depends(auth.oauth2_scheme),
+    db: Session = Depends(get_db)
+):
+    user = auth.get_current_user(db, token)
+    crud.change_password(db, user.username, new_password)
     log_action(user, f"Changed password for user {user.username}")
+
     return {"msg": "Password changed successfully"}
+
+# Эндпоинт для проверки токена
+@app.post("/verify-token")
+def verify_token(token: str):
+    # Проверка токена через внешний сервис
+    user_data = auth.verify_token(token)
+    return {"message": "Token is valid", "user_data": user_data}
+
+
+
+
+

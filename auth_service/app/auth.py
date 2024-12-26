@@ -1,6 +1,7 @@
 from datetime import datetime, timedelta
 from jose import JWTError, jwt  # Используйте библиотеку jose
 from fastapi import Depends, HTTPException, status
+from fastapi.security import OAuth2PasswordBearer
 from sqlalchemy.orm import Session  # Импортируем Session
 from passlib.context import CryptContext  # Импортируем CryptContext
 from . import crud, schemas
@@ -11,6 +12,7 @@ pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
 SECRET_KEY = "F03E2408FEB325B0732DCD4BB5ADA367"
 ALGORITHM = "HS256"
 ACCESS_TOKEN_EXPIRE_MINUTES = 30
+oauth2_scheme = OAuth2PasswordBearer(tokenUrl="login")
 
 # Функция для создания токена
 def create_access_token(data: dict, expires_delta: timedelta = timedelta(minutes=ACCESS_TOKEN_EXPIRE_MINUTES)):
@@ -30,6 +32,7 @@ def authenticate_user(db: Session, username: str, password: str):
 # Функция для получения текущего пользователя
 def get_current_user(db: Session, token: str):
     try:
+        # Декодируем токен и получаем payload
         payload = jwt.decode(token, SECRET_KEY, algorithms=[ALGORITHM])
         user = crud.get_user(db, payload.get("sub"))
         if user is None:
@@ -37,3 +40,17 @@ def get_current_user(db: Session, token: str):
     except JWTError:
         raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Invalid token")
     return user
+
+def verify_token(token: str):
+    try:
+        # Декодируем токен
+        payload = jwt.decode(token, SECRET_KEY, algorithms=[ALGORITHM])
+        user_id = payload.get("id")
+        username = payload.get("username")
+        if user_id is None or username is None:
+            raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Invalid token")
+        return {"id": user_id, "username": username}
+    except JWTError:
+        raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Invalid token")
+
+
