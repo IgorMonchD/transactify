@@ -167,7 +167,7 @@ Authorization: Bearer <token>
   "detail": "Insufficient funds"
 }
 ```
-## 6. Получение истории транзакций
+## 2. Получение истории транзакций
 
 ### Endpoint:
 `GET /transactions`
