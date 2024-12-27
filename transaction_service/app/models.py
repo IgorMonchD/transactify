@@ -1,5 +1,6 @@
 from sqlalchemy import Column, Integer, String, Float, ForeignKey
 from sqlalchemy.ext.declarative import declarative_base
+from datetime import datetime
 
 Base = declarative_base()
 
@@ -11,7 +12,7 @@ class Transaction(Base):
     sender_id = Column(Integer)
     receiver_id = Column(Integer)
     status = Column(String, default="pending")
-    timestamp = Column(String)
+    timestamp = Column(String, default=datetime.utcnow)
 
 class User(Base):
     __tablename__ = 'users'

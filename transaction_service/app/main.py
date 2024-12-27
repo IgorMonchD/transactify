@@ -45,7 +45,7 @@ def get_transactions(
 ):
     # Проверка токена через микросервис аутентификации
     user_data = auth.verify_token(token)  # Получаем информацию о пользователе через микросервис
-    user_id = user_data["user_id"]
+    user_id = user_data["user_data"]["user_id"]
 
     transactions = crud.get_transactions(db, user_id, skip, limit)
     return {"transactions": transactions, "total_count": len(transactions)}

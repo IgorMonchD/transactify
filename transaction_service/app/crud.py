@@ -1,6 +1,7 @@
 from sqlalchemy.orm import Session
 from fastapi import HTTPException
 from . import models
+from .logger import log_action
 
 
 def get_balance(db: Session, user_id: int) -> float:
@@ -13,13 +14,13 @@ def get_balance(db: Session, user_id: int) -> float:
     return user.balance
 
 
-def create_transaction(db: Session, from_user_id: int, to_user_id: int, amount: float) -> models.Transaction:
+def create_transaction(db: Session, sender_id: int, receiver_id: int, amount: float) -> models.Transaction:
     """
     Функция для создания транзакции
     """
     # Проверяем, есть ли пользователи
-    from_user = db.query(models.User).filter(models.User.id == from_user_id).first()
-    to_user = db.query(models.User).filter(models.User.id == to_user_id).first()
+    from_user = db.query(models.User).filter(models.User.id == sender_id).first()
+    to_user = db.query(models.User).filter(models.User.id == receiver_id).first()
 
     if not from_user or not to_user:
         raise HTTPException(status_code=404, detail="User(s) not found")
@@ -33,8 +34,8 @@ def create_transaction(db: Session, from_user_id: int, to_user_id: int, amount: 
 
     # Создаем запись о транзакции
     transaction = models.Transaction(
-        from_user_id=from_user_id,
-        to_user_id=to_user_id,
+        sender_id=sender_id,
+        receiver_id=receiver_id,
         amount=amount,
         status="completed"
     )
@@ -44,7 +45,7 @@ def create_transaction(db: Session, from_user_id: int, to_user_id: int, amount: 
     db.refresh(transaction)
 
     # Логируем успешную транзакцию
-    logger.info(f"Transaction completed: {from_user_id} -> {to_user_id} amount: {amount}")
+    log_action(from_user ,f"Transaction completed: {sender_id} -> {receiver_id} amount: {amount}")
 
     return transaction
 
@@ -54,6 +55,6 @@ def get_transactions(db: Session, user_id: int, skip: int = 0, limit: int = 10) 
     Функция для получения списка транзакций пользователя
     """
     transactions = db.query(models.Transaction).filter(
-        (models.Transaction.from_user_id == user_id) | (models.Transaction.to_user_id == user_id)
+        (models.Transaction.sender_id == user_id) | (models.Transaction.sender_id == user_id)
     ).offset(skip).limit(limit).all()
     return transactions
