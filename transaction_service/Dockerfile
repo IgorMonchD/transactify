@@ -17,12 +17,6 @@ RUN apt-get install -y curl && \
     curl -sSL https://github.com/jwilder/dockerize/releases/download/v0.6.1/dockerize-linux-amd64-v0.6.1.tar.gz | tar -xzv -C /usr/local/bin
 
 
-# Копируем ваш скрипт ожидания
-COPY wait-for-postgres.sh /wait-for-postgres.sh
-
-# Делаем его исполнимым
-RUN chmod +x /wait-for-postgres.sh
-
 # Копирование всех файлов в контейнер
 COPY . /app/
 

@@ -6,7 +6,8 @@ WORKDIR /app
 
 # Копирование зависимостей
 COPY requirements.txt /app/
-COPY alembic /app/auth_service/alembic
+
+COPY alembic /app/transaction_service/alembic
 
 
 # Установка зависимостей
@@ -16,19 +17,11 @@ RUN apt-get install -y curl && \
     curl -sSL https://github.com/jwilder/dockerize/releases/download/v0.6.1/dockerize-linux-amd64-v0.6.1.tar.gz | tar -xzv -C /usr/local/bin
 
 
-# Копируем ваш скрипт ожидания
-COPY wait-for-postgres.sh /wait-for-postgres.sh
-
-# Делаем его исполнимым
-RUN chmod +x /wait-for-postgres.sh
-
-
 # Копирование всех файлов в контейнер
 COPY . /app/
 
 # Открытие порта
 EXPOSE 8000
-
 
 # Команда для запуска FastAPI
 CMD ["uvicorn", "app.main:app", "--host", "0.0.0.0", "--port", "8000"]
