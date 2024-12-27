@@ -11,7 +11,7 @@ services:
       - ./logs:/app/logs
     depends_on:
       - postgres
-    command: uvicorn app.main:app --host 0.0.0.0 --port 8000
+    command: ./wait-for-postgres.sh uvicorn app.main:app --host 0.0.0.0 --port 8000
 
   transaction_service:
     build: ./transaction_service
@@ -23,7 +23,7 @@ services:
       - ./logs:/app/logs
     depends_on:
       - postgres
-    command: uvicorn app.main:app --host 0.0.0.0 --port 8001
+    command: ./wait-for-postgres.sh uvicorn app.main:app --host 0.0.0.0 --port 8001
 
   postgres:
     image: postgres:latest

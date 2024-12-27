@@ -45,7 +45,7 @@ def create_transaction(db: Session, sender_id: int, receiver_id: int, amount: fl
     db.refresh(transaction)
 
     # Логируем успешную транзакцию
-    log_action(from_user ,f"Transaction completed: {sender_id} -> {receiver_id} amount: {amount}")
+    log_action(from_user, f"Transaction completed: {sender_id} -> {receiver_id} amount: {amount}")
 
     return transaction
 
