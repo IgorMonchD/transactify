@@ -1,10 +1,18 @@
+import os
 import logging
+
+# Убедитесь, что папка для логов существует
+log_dir = "logs"
+if not os.path.exists(log_dir):
+    os.makedirs(log_dir)
 
 # Настроим базовое логирование
 logger = logging.getLogger(__name__)
 logger.setLevel(logging.INFO)
 formatter = logging.Formatter('%(asctime)s - %(message)s')
-file_handler = logging.FileHandler("app.log")
+
+# Указываем путь к файлу логов
+file_handler = logging.FileHandler(os.path.join(log_dir, "app.log"))
 file_handler.setFormatter(formatter)
 logger.addHandler(file_handler)
 

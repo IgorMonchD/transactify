@@ -2,7 +2,7 @@ from fastapi import FastAPI, Depends, HTTPException
 from sqlalchemy.orm import Session
 from . import crud, models, schemas
 from .database import SessionLocal
-from . import auth  # Импортируем модуль с верификацией токена
+from . import auth
 
 app = FastAPI()
 
@@ -17,20 +17,24 @@ def get_db():
 # Эндпоинт для перевода средств
 @app.post("/transfer")
 def transfer(
-        transaction: schemas.TransactionCreate,
-        db: Session = Depends(get_db),
-        token: str = Depends(auth.oauth2_scheme)  # Токен передается через Authorization
+    transaction: schemas.TransactionCreate,
+    db: Session = Depends(get_db),
+    token: str = Depends(auth.oauth2_scheme)  # Токен передается через Authorization
 ):
     # Проверка токена через микросервис аутентификации
     user_data = auth.verify_token(token)  # Получаем информацию о пользователе через микросервис
-    user_id = user_data["user_id"]
+
+    user_id = user_data["user_data"]["user_id"]
 
     # Проверка баланса и создание транзакции
     sender_balance = crud.get_balance(db, user_id)
+    if sender_balance is None:
+        raise HTTPException(status_code=404, detail="Balance not found")
     if sender_balance < transaction.amount:
         raise HTTPException(status_code=400, detail="Insufficient funds")
 
     return crud.create_transaction(db, user_id, transaction.receiver_id, transaction.amount)
+
 
 # Эндпоинт для получения истории транзакций
 @app.get("/transactions")

@@ -1,12 +1,11 @@
 from datetime import datetime, timedelta
-from jose import JWTError, jwt  # Используйте библиотеку jose
+from jose import JWTError, jwt
 from fastapi import Depends, HTTPException, status
-from fastapi.security import OAuth2PasswordBearer
-from sqlalchemy.orm import Session  # Импортируем Session
-from passlib.context import CryptContext  # Импортируем CryptContext
-from . import crud, schemas
+from fastapi.security import OAuth2PasswordBearer, OAuth2PasswordRequestForm
+from sqlalchemy.orm import Session
+from passlib.context import CryptContext
+from . import crud
 
-# Создаем контекст для хэширования паролей
 pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
 
 SECRET_KEY = "F03E2408FEB325B0732DCD4BB5ADA367"
@@ -14,7 +13,6 @@ ALGORITHM = "HS256"
 ACCESS_TOKEN_EXPIRE_MINUTES = 30
 oauth2_scheme = OAuth2PasswordBearer(tokenUrl="login")
 
-# Функция для создания токена
 def create_access_token(data: dict, expires_delta: timedelta = timedelta(minutes=ACCESS_TOKEN_EXPIRE_MINUTES)):
     to_encode = data.copy()
     expire = datetime.utcnow() + expires_delta
@@ -22,35 +20,32 @@ def create_access_token(data: dict, expires_delta: timedelta = timedelta(minutes
     encoded_jwt = jwt.encode(to_encode, SECRET_KEY, algorithm=ALGORITHM)
     return encoded_jwt
 
-# Функция для аутентификации пользователя
 def authenticate_user(db: Session, username: str, password: str):
     user = crud.get_user_by_username(db, username)
     if not user or not pwd_context.verify(password, user.hashed_password):
-        raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Invalid credentials")
+        return None
     return user
 
-# Функция для получения текущего пользователя
 def get_current_user(db: Session, token: str):
     try:
-        # Декодируем токен и получаем payload
         payload = jwt.decode(token, SECRET_KEY, algorithms=[ALGORITHM])
-        user = crud.get_user(db, payload.get("sub"))
-        if user is None:
+        user_id = payload.get("user_id")
+        if not user_id:
+            raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Invalid token")
+        user = crud.get_user(db, user_id)
+        if not user:
             raise HTTPException(status_code=404, detail="User not found")
+        return user
     except JWTError:
         raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Invalid token")
-    return user
 
 def verify_token(token: str):
     try:
-        # Декодируем токен
         payload = jwt.decode(token, SECRET_KEY, algorithms=[ALGORITHM])
-        user_id = payload.get("id")
+        user_id = payload.get("user_id")
         username = payload.get("username")
-        if user_id is None or username is None:
+        if not user_id or not username:
             raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Invalid token")
-        return {"id": user_id, "username": username}
+        return {"user_id": user_id, "username": username}
     except JWTError:
         raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Invalid token")
-
-

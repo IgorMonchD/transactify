@@ -20,22 +20,18 @@ def register(user: schemas.UserCreate, db: Session = Depends(get_db)):
     db_user = crud.get_user_by_username(db, user.username)
     if db_user:
         raise HTTPException(status_code=400, detail="Username already registered")
-    if db_user:
-        raise HTTPException(status_code=400, detail="Username already registered")
     return crud.create_user(db, user)
 
 @app.post("/login", response_model=schemas.Token)
-def login(username: str, password: str, db: Session = Depends(get_db)):
-    user = auth.authenticate_user(db, username, password)
+def login(form_data: auth.OAuth2PasswordRequestForm = Depends(), db: Session = Depends(get_db)):
+    user = auth.authenticate_user(db, form_data.username, form_data.password)
     if not user:
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
             detail="Incorrect username or password",
         )
-    print(user)
-    access_token = auth.create_access_token(data={"id": user.id, "username": user.username})
+    access_token = auth.create_access_token(data={"user_id": user.id, "username": user.username})
     return {"access_token": access_token, "token_type": "bearer"}
-
 
 @app.post("/change-password")
 def change_password(
@@ -49,11 +45,13 @@ def change_password(
 
     return {"msg": "Password changed successfully"}
 
-# Эндпоинт для проверки токена
 @app.post("/verify-token")
-def verify_token(token: str):
-    # Проверка токена через внешний сервис
+def verify_token(token_request: schemas.TokenRequest, db: Session = Depends(get_db)):
+    token = token_request.token
     user_data = auth.verify_token(token)
+    user = crud.get_user(db, user_data["user_id"])
+    if not user:
+        raise HTTPException(status_code=404, detail="User not found")
     return {"message": "Token is valid", "user_data": user_data}
 
 
